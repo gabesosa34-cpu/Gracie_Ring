@@ -1,5 +1,5 @@
 /* ============================================================
-   Gracie — engagement ring customizer
+   The Grace Collection — engagement ring customizer
    Design tokens
    ============================================================ */
 :root{
@@ -26,13 +26,16 @@
   --gem-stroke:#93A9BE;
   --gem-facet:#A6BACD;
   --gem-sparkle:#FFFFFF;
+  --gem-hi:#FFFFFF;
+  --gem-deep:#C7D6E4;
   --melee-fill:#FBFDFF;
+  --ring-shadow:rgba(42,36,30,0.22);
 }
 @media (prefers-color-scheme: dark){
-  :root{ --gem-fill:#E4EFF9; --gem-stroke:#72879C; --gem-facet:#8CA0B4; --melee-fill:#EFF5FB; }
+  :root{ --gem-fill:#E4EFF9; --gem-stroke:#72879C; --gem-facet:#8CA0B4; --gem-deep:#5E7488; --melee-fill:#EFF5FB; --ring-shadow:rgba(0,0,0,0.5); }
 }
-:root[data-theme="dark"]{ --gem-fill:#E4EFF9; --gem-stroke:#72879C; --gem-facet:#8CA0B4; --melee-fill:#EFF5FB; }
-:root[data-theme="light"]{ --gem-fill:#F3F8FC; --gem-stroke:#93A9BE; --gem-facet:#A6BACD; --melee-fill:#FBFDFF; }
+:root[data-theme="dark"]{ --gem-fill:#E4EFF9; --gem-stroke:#72879C; --gem-facet:#8CA0B4; --gem-deep:#5E7488; --melee-fill:#EFF5FB; --ring-shadow:rgba(0,0,0,0.5); }
+:root[data-theme="light"]{ --gem-fill:#F3F8FC; --gem-stroke:#93A9BE; --gem-facet:#A6BACD; --gem-deep:#C7D6E4; --melee-fill:#FBFDFF; --ring-shadow:rgba(42,36,30,0.22); }
 @media (prefers-color-scheme: dark){
   :root{
     --bone:#1A1713;

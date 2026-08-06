@@ -1,4 +1,4 @@
-"""Streamlit host for the Gracie engagement ring customizer.
+"""Streamlit host for The Grace Collection engagement ring customizer.
 
 The customizer itself is a self-contained React app (index.html) built
 with app.css + app.js + build.py. This file just embeds it.
@@ -8,7 +8,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Gracie — Design Your Engagement Ring",
+    page_title="The Grace Collection — Design Your Engagement Ring",
     page_icon="💍",
     layout="wide",
 )

@@ -80,34 +80,41 @@ function ellipseOutline(rx,ry,n){
   return pts;
 }
 
-function gemRadial(w,hh,n,tableScale,spokeStep,detailed,keyBase){
+function gemFills(uid){
+  return { outer:{ fill:'url(#gemBrilliance-'+uid+')' }, table:{ fill:'url(#gemTableShine-'+uid+')' } };
+}
+
+function gemRadial(w,hh,n,tableScale,spokeStep,detailed,keyBase,uid){
+  var fills = gemFills(uid);
   var outer = ellipseOutline(w,hh,n);
   var table = scalePts(outer, tableScale);
-  var kids = [h('polygon',{ points:polyStr(outer), className:'gem-outer', key:keyBase+'-o' })];
+  var kids = [h('polygon',{ points:polyStr(outer), className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     for (var i=0;i<n;i+=spokeStep){
       kids.push(h('line',{ x1:outer[i][0], y1:outer[i][1], x2:table[i][0], y2:table[i][1], className:'gem-facet', key:keyBase+'-f'+i }));
     }
   }
-  kids.push(h('polygon',{ points:polyStr(table), className:'gem-table', key:keyBase+'-t' }));
+  kids.push(h('polygon',{ points:polyStr(table), className:'gem-table', style:fills.table, key:keyBase+'-t' }));
   return kids;
 }
 
-function gemPrincess(w,hh,detailed,keyBase){
+function gemPrincess(w,hh,detailed,keyBase,uid){
+  var fills = gemFills(uid);
   var outer = [[w,-hh],[w,hh],[-w,hh],[-w,-hh]];
   var table = scalePts(outer, 0.46);
-  var kids = [h('polygon',{ points:polyStr(outer), className:'gem-outer', key:keyBase+'-o' })];
+  var kids = [h('polygon',{ points:polyStr(outer), className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     kids.push(h('line',{ x1:outer[0][0], y1:outer[0][1], x2:outer[2][0], y2:outer[2][1], className:'gem-facet', key:keyBase+'-d1' }));
     kids.push(h('line',{ x1:outer[1][0], y1:outer[1][1], x2:outer[3][0], y2:outer[3][1], className:'gem-facet', key:keyBase+'-d2' }));
   }
-  kids.push(h('polygon',{ points:polyStr(table), className:'gem-table', key:keyBase+'-t' }));
+  kids.push(h('polygon',{ points:polyStr(table), className:'gem-table', style:fills.table, key:keyBase+'-t' }));
   return kids;
 }
 
-function gemCushion(w,hh,detailed,keyBase){
+function gemCushion(w,hh,detailed,keyBase,uid){
+  var fills = gemFills(uid);
   var r = Math.min(w,hh) * 0.34;
-  var kids = [h('rect',{ x:-w, y:-hh, width:w*2, height:hh*2, rx:r, ry:r, className:'gem-outer', key:keyBase+'-o' })];
+  var kids = [h('rect',{ x:-w, y:-hh, width:w*2, height:hh*2, rx:r, ry:r, className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     var corners = [[w*0.84,-hh*0.84],[w*0.84,hh*0.84],[-w*0.84,hh*0.84],[-w*0.84,-hh*0.84]];
     var inner = scalePts(corners, 0.5);
@@ -116,7 +123,7 @@ function gemCushion(w,hh,detailed,keyBase){
     });
   }
   var ri = r*0.55;
-  kids.push(h('rect',{ x:-w*0.48, y:-hh*0.48, width:w*0.96, height:hh*0.96, rx:ri, ry:ri, className:'gem-table', key:keyBase+'-t' }));
+  kids.push(h('rect',{ x:-w*0.48, y:-hh*0.48, width:w*0.96, height:hh*0.96, rx:ri, ry:ri, className:'gem-table', style:fills.table, key:keyBase+'-t' }));
   return kids;
 }
 
@@ -128,13 +135,14 @@ function chamferPts(w,hh,c){
     [-w,-hh+c],[-(w-c),-hh]
   ];
 }
-function gemEmerald(w,hh,detailed,keyBase){
+function gemEmerald(w,hh,detailed,keyBase,uid){
+  var fills = gemFills(uid);
   var m = Math.min(w,hh);
-  var kids = [h('polygon',{ points:polyStr(chamferPts(w,hh,m*0.32)), className:'gem-outer', key:keyBase+'-o' })];
+  var kids = [h('polygon',{ points:polyStr(chamferPts(w,hh,m*0.32)), className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     kids.push(h('polygon',{ points:polyStr(chamferPts(w*0.78,hh*0.78,m*0.26)), className:'gem-step', key:keyBase+'-s' }));
   }
-  kids.push(h('polygon',{ points:polyStr(chamferPts(w*0.52,hh*0.52,m*0.2)), className:'gem-table', key:keyBase+'-t' }));
+  kids.push(h('polygon',{ points:polyStr(chamferPts(w*0.52,hh*0.52,m*0.2)), className:'gem-table', style:fills.table, key:keyBase+'-t' }));
   return kids;
 }
 
@@ -145,14 +153,15 @@ function pearPath(w,hh){
     ' C ' + (-w*0.55).toFixed(2) + ',' + hh.toFixed(2) + ' ' + (-w).toFixed(2) + ',' + (hh*0.76).toFixed(2) + ' ' + (-w).toFixed(2) + ',' + (hh*0.32).toFixed(2) +
     ' C ' + (-w).toFixed(2) + ',' + (-hh*0.05).toFixed(2) + ' ' + (-w*0.86).toFixed(2) + ',' + (-hh*0.55).toFixed(2) + ' 0,' + (-hh).toFixed(2) + ' Z';
 }
-function gemPear(w,hh,detailed,keyBase){
-  var kids = [h('path',{ d:pearPath(w,hh), className:'gem-outer', key:keyBase+'-o' })];
+function gemPear(w,hh,detailed,keyBase,uid){
+  var fills = gemFills(uid);
+  var kids = [h('path',{ d:pearPath(w,hh), className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     kids.push(h('line',{ x1:0, y1:-hh, x2:0, y2:-hh*0.4, className:'gem-facet', key:keyBase+'-f1' }));
     kids.push(h('line',{ x1:w*0.9, y1:hh*0.2, x2:w*0.3, y2:hh*0.1, className:'gem-facet', key:keyBase+'-f2' }));
     kids.push(h('line',{ x1:-w*0.9, y1:hh*0.2, x2:-w*0.3, y2:hh*0.1, className:'gem-facet', key:keyBase+'-f3' }));
   }
-  kids.push(h('path',{ d:pearPath(w*0.5,hh*0.5), className:'gem-table', transform:'translate(0,'+(hh*0.16).toFixed(2)+')', key:keyBase+'-t' }));
+  kids.push(h('path',{ d:pearPath(w*0.5,hh*0.5), className:'gem-table', style:fills.table, transform:'translate(0,'+(hh*0.16).toFixed(2)+')', key:keyBase+'-t' }));
   return kids;
 }
 
@@ -163,30 +172,42 @@ function marquisePath(w,hh){
     ' C ' + (-w*0.58).toFixed(2) + ',' + (hh*0.56).toFixed(2) + ' ' + (-w).toFixed(2) + ',' + (hh*0.22).toFixed(2) + ' ' + (-w).toFixed(2) + ',0' +
     ' C ' + (-w).toFixed(2) + ',' + (-hh*0.22).toFixed(2) + ' ' + (-w*0.58).toFixed(2) + ',' + (-hh*0.56).toFixed(2) + ' 0,' + (-hh).toFixed(2) + ' Z';
 }
-function gemMarquise(w,hh,detailed,keyBase){
-  var kids = [h('path',{ d:marquisePath(w,hh), className:'gem-outer', key:keyBase+'-o' })];
+function gemMarquise(w,hh,detailed,keyBase,uid){
+  var fills = gemFills(uid);
+  var kids = [h('path',{ d:marquisePath(w,hh), className:'gem-outer', style:fills.outer, key:keyBase+'-o' })];
   if (detailed){
     kids.push(h('line',{ x1:0, y1:-hh, x2:0, y2:-hh*0.32, className:'gem-facet', key:keyBase+'-f1' }));
     kids.push(h('line',{ x1:0, y1:hh, x2:0, y2:hh*0.32, className:'gem-facet', key:keyBase+'-f2' }));
     kids.push(h('line',{ x1:w, y1:0, x2:w*0.36, y2:0, className:'gem-facet', key:keyBase+'-f3' }));
     kids.push(h('line',{ x1:-w, y1:0, x2:-w*0.36, y2:0, className:'gem-facet', key:keyBase+'-f4' }));
   }
-  kids.push(h('path',{ d:marquisePath(w*0.5,hh*0.5), className:'gem-table', key:keyBase+'-t' }));
+  kids.push(h('path',{ d:marquisePath(w*0.5,hh*0.5), className:'gem-table', style:fills.table, key:keyBase+'-t' }));
   return kids;
 }
 
-function buildGem(shape,w,hh,detailed,keyBase){
+function buildGem(shape,w,hh,detailed,keyBase,uid){
   keyBase = keyBase || 'g';
+  uid = uid || 'g';
   switch(shape){
-    case 'round':    return gemRadial(w,hh,24,0.42,3,detailed,keyBase);
-    case 'oval':     return gemRadial(w,hh,22,0.46,2,detailed,keyBase);
-    case 'princess': return gemPrincess(w,hh,detailed,keyBase);
-    case 'cushion':  return gemCushion(w,hh,detailed,keyBase);
-    case 'emerald':  return gemEmerald(w,hh,detailed,keyBase);
-    case 'pear':     return gemPear(w,hh,detailed,keyBase);
-    case 'marquise': return gemMarquise(w,hh,detailed,keyBase);
-    default:         return gemRadial(w,hh,24,0.42,3,detailed,keyBase);
+    case 'round':    return gemRadial(w,hh,24,0.42,3,detailed,keyBase,uid);
+    case 'oval':     return gemRadial(w,hh,22,0.46,2,detailed,keyBase,uid);
+    case 'princess': return gemPrincess(w,hh,detailed,keyBase,uid);
+    case 'cushion':  return gemCushion(w,hh,detailed,keyBase,uid);
+    case 'emerald':  return gemEmerald(w,hh,detailed,keyBase,uid);
+    case 'pear':     return gemPear(w,hh,detailed,keyBase,uid);
+    case 'marquise': return gemMarquise(w,hh,detailed,keyBase,uid);
+    default:         return gemRadial(w,hh,24,0.42,3,detailed,keyBase,uid);
   }
+}
+
+function gemHighlightArc(w,hh,keyBase){
+  /* Sits opposite the gradient's own bright hotspot (upper-left, see
+     gemGradientDefs) so this crisp stroke reads as a distinct glint
+     against the gradient's cooler mid-tone, rather than blending into
+     its own highlight. */
+  var x1=w*0.18, y1=-hh*0.58, x2=w*0.64, y2=-hh*0.28, cx=w*0.6, cy=-hh*0.7;
+  var d = 'M '+x1.toFixed(1)+','+y1.toFixed(1)+' Q '+cx.toFixed(1)+','+cy.toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1);
+  return h('path',{ key:keyBase, d:d, fill:'none', stroke:'var(--gem-hi)', strokeWidth:Math.max(1.1,w*0.075), strokeLinecap:'round', opacity:0.8 });
 }
 
 function sparkleMark(cx,cy,s,key){
@@ -311,6 +332,30 @@ function metalGradientDefs(uid){
   });
 }
 
+/* Radial "light entering the stone" gradients — brighter, off-center
+   hotspot fading to a deeper edge tone, so facets read as catching
+   and returning light rather than flat color fills. */
+function gemGradientDefs(uid){
+  return [
+    h('radialGradient',{ id:'gemBrilliance-'+uid, cx:'36%', cy:'30%', r:'78%', key:'gb' },
+      h('stop',{ offset:'0%', style:{ stopColor:'var(--gem-hi)' } }),
+      h('stop',{ offset:'42%', style:{ stopColor:'var(--gem-fill)' } }),
+      h('stop',{ offset:'100%', style:{ stopColor:'var(--gem-deep)' } })
+    ),
+    h('radialGradient',{ id:'gemTableShine-'+uid, cx:'34%', cy:'28%', r:'82%', key:'gt' },
+      h('stop',{ offset:'0%', style:{ stopColor:'var(--gem-hi)' } }),
+      h('stop',{ offset:'58%', style:{ stopColor:'var(--gem-table)' } }),
+      h('stop',{ offset:'100%', style:{ stopColor:'var(--gem-fill)' } })
+    )
+  ];
+}
+
+function softShadowFilter(uid){
+  return h('filter',{ id:'softShadow-'+uid, x:'-60%', y:'-60%', width:'220%', height:'220%', key:'sh' },
+    h('feGaussianBlur',{ stdDeviation:3.2 })
+  );
+}
+
 /* ============================================================
    RING SCENE
    ============================================================ */
@@ -330,11 +375,13 @@ function RingScene(props){
   var bandStrokeW = 6 + ringBandWidth*4.1;
   var strokeUrl = 'url(#metalGrad-'+metal.id+'-'+uid+')';
 
-  var kids = [ h('defs',{ key:'defs' }, metalGradientDefs(uid)) ];
+  var kids = [ h('defs',{ key:'defs' }, metalGradientDefs(uid), gemGradientDefs(uid), softShadowFilter(uid)) ];
 
+  kids.push(h('ellipse',{ key:'bandShadow', cx:bandCx, cy:bandCy+bandRy*0.58, rx:bandRx*0.7, ry:bandRy*0.15, style:{ fill:'var(--ring-shadow)' }, filter:'url(#softShadow-'+uid+')' }));
   kids.push(h('ellipse',{ key:'band', cx:bandCx, cy:bandCy, rx:bandRx, ry:bandRy, fill:'none', stroke:strokeUrl, strokeWidth:bandStrokeW }));
   Array.prototype.push.apply(kids, bandProfileOverlay(bandCx,bandCy,bandRx,bandRy,bandStrokeW,ringBandProfile,metal,'e-profile'));
   Array.prototype.push.apply(kids, bandDetailOverlay(bandCx,bandCy,bandRx,bandRy,bandStrokeW,ringBandDetail,metal,'e-detail'));
+  kids.push(h('polyline',{ key:'bandShine', points:arcPolyStr(arcPoints(bandCx,bandCy,bandRx,bandRy,-160,-104,10)), fill:'none', stroke:metal.light, strokeWidth:Math.max(1.2,bandStrokeW*0.13), strokeLinecap:'round', opacity:0.7 }));
 
   if (setting==='pave' && ringBandDetail!=='pave'){
     kids.push(paveArc(bandCx,bandCy,bandRx,bandRy,-172,-100,6,'e-pave-l'));
@@ -348,7 +395,7 @@ function RingScene(props){
     [-1,1].forEach(function(dir){
       var cx = gemCx+dir*offX, cy = gemCy+11;
       kids.push(h('g',{ key:'side'+dir, transform:'translate('+cx+','+cy+')' },
-        buildGem(shape, sw, sh, false, 'side'+dir),
+        buildGem(shape, sw, sh, false, 'side'+dir, uid),
         prongMark(sw*0.72,-sh*0.72,45,metal.mid,metal.dark,'sp'+dir+'a'),
         prongMark(-sw*0.72,-sh*0.72,-45,metal.mid,metal.dark,'sp'+dir+'b')
       ));
@@ -356,11 +403,12 @@ function RingScene(props){
   }
 
   kids.push(h('g',{ key:'center', transform:'translate('+gemCx+','+gemCy+')' },
-    buildGem(shape, gw, gh, true, 'ctr'),
+    buildGem(shape, gw, gh, true, 'ctr', uid),
     prongMark(gw*0.7,-gh*0.7,45,metal.mid,metal.dark,'pa'),
     prongMark(gw*0.7,gh*0.7,135,metal.mid,metal.dark,'pb'),
     prongMark(-gw*0.7,gh*0.7,-135,metal.mid,metal.dark,'pc'),
     prongMark(-gw*0.7,-gh*0.7,-45,metal.mid,metal.dark,'pd'),
+    gemHighlightArc(gw,gh,'hi'),
     sparkleMark(-gw*0.34,-gh*0.42,3.6,'s1'),
     sparkleMark(gw*0.42,gh*0.18,2.7,'s2')
   ));
@@ -369,10 +417,12 @@ function RingScene(props){
   if (bandOn){
     viewH = 428;
     var wCx = 150, wCy = 350, wRx = 90, wRy = 70;
+    kids.push(h('ellipse',{ key:'wbandShadow', cx:wCx, cy:wCy+wRy*0.6, rx:wRx*0.7, ry:wRy*0.15, style:{ fill:'var(--ring-shadow)' }, filter:'url(#softShadow-'+uid+')' }));
     if (bandStyle==='curved'){
       kids.push(curvedBandPath(wCx,wCy,wRx,wRy,strokeUrl,'wband'));
     } else {
       kids.push(h('ellipse',{ key:'wband', cx:wCx, cy:wCy, rx:wRx, ry:wRy, fill:'none', stroke:strokeUrl, strokeWidth:13 }));
+      kids.push(h('polyline',{ key:'wbandShine', points:arcPolyStr(arcPoints(wCx,wCy,wRx,wRy,-160,-104,10)), fill:'none', stroke:metal.light, strokeWidth:1.4, strokeLinecap:'round', opacity:0.65 }));
     }
     if (bandStyle==='pave'){
       kids.push(paveArc(wCx,wCy,wRx,wRy,-172,-8,10,'w-pave'));
@@ -386,18 +436,20 @@ function RingGlyph(props){
   var metal = findMetal(props.metalId) || METALS[0];
   var uid = props.uid;
   return h('svg',{ viewBox:'0 0 46 46', className:'tray-glyph', 'aria-hidden':'true' },
-    h('defs',null, metalGradientDefs(uid)),
+    h('defs',null, metalGradientDefs(uid), gemGradientDefs(uid)),
     h('ellipse',{ cx:23, cy:28, rx:15, ry:11.5, fill:'none', stroke:'url(#metalGrad-'+metal.id+'-'+uid+')', strokeWidth:4 }),
-    h('path',{ d:'M23,10 L28.2,17.2 L23,24.6 L17.8,17.2 Z', className:'gem-outer' })
+    h('path',{ d:'M23,10 L28.2,17.2 L23,24.6 L17.8,17.2 Z', className:'gem-outer', style:{ fill:'url(#gemBrilliance-'+uid+')' } })
   );
 }
 
 function MiniShapeIcon(props){
   var shape = props.shape;
+  var uid = 'mini-'+shape;
   var box = GEM_BOX[shape] || GEM_BOX.round;
   var w = box.w*13.5, hh = box.h*13.5;
   return h('svg',{ viewBox:'0 0 44 44', className:'mini-icon', 'aria-hidden':'true' },
-    h('g',{ transform:'translate(22,22)' }, buildGem(shape,w,hh,true,'mi'))
+    h('defs',null, gemGradientDefs(uid)),
+    h('g',{ transform:'translate(22,22)' }, buildGem(shape,w,hh,true,'mi',uid))
   );
 }
 
@@ -940,7 +992,7 @@ function QuoteForm(props){
       h('div',{ className:'confirm-panel' },
         BigCheckIcon(),
         h('h2',{ className:'serif' }, 'Request received'),
-        h('p',null, 'Thank you, '+form.name.split(' ')[0]+'. Gracie’s atelier will follow up at '+form.email+' within one business day to discuss your specification.'),
+        h('p',null, 'Thank you, '+form.name.split(' ')[0]+'. Our atelier will follow up at '+form.email+' within one business day to discuss your specification.'),
         h('button',{ type:'button', className:'btn btn-ghost', style:{ marginTop:20 }, onClick:onRestart }, 'Design another ring')
       )
     );
@@ -1018,7 +1070,7 @@ function App(){
   ];
 
   var header = h('header',{ className:'masthead' },
-    h('div',{ className:'wordmark' }, 'Gracie ', h('em',null,'Atelier')),
+    h('div',{ className:'wordmark' }, 'The ', h('em',null,'Grace'), ' Collection'),
     h('div',{ className:'tagline' }, 'Design your engagement ring, stone by stone.')
   );
 

@@ -1,9 +1,9 @@
-# Gracie — Engagement Ring Customizer
+# The Grace Collection — Engagement Ring Customizer
 
-A single-page engagement ring customizer: a four-step wizard (stone, setting,
-metal, matching band) with a persistent live preview rendered as layered SVG,
-a running price total, and a closing "request a quote" form. No checkout,
-no backend — mock diamond inventory only.
+A single-page engagement ring customizer: a five-step wizard (stone, setting,
+metal, matching wedding band, band design) with a persistent live preview
+rendered as layered SVG, a running price total, and a closing "request a
+quote" form. No checkout, no backend — mock diamond inventory only.
 
 ## How it's built
 
