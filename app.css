@@ -25,7 +25,6 @@
   --gem-table:#FFFFFF;
   --gem-stroke:#93A9BE;
   --gem-facet:#A6BACD;
-  --gem-sparkle:#FFFFFF;
   --gem-hi:#FFFFFF;
   --gem-deep:#C7D6E4;
   --melee-fill:#FBFDFF;
@@ -181,11 +180,10 @@ h1,h2,h3{ margin:0; font-family:var(--serif); font-weight:560; color:var(--ink);
 }
 .tray-stage{
   padding:26px 20px 6px;
-  display:flex; justify-content:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
   background:
     radial-gradient(ellipse 62% 40% at 50% 78%, var(--card-sunk) 0%, transparent 72%);
 }
-.tray-stage svg{ width:100%; max-width:280px; height:auto; }
 
 .tray-breakdown{ padding:4px 20px 20px; }
 .tray-line{
@@ -383,10 +381,19 @@ input[type="range"]::-moz-range-thumb{
   overflow:hidden; box-shadow:var(--shadow-tray);
 }
 .spec-hero{
-  padding:36px 32px 8px; display:flex; justify-content:center;
+  padding:36px 32px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
   background:radial-gradient(ellipse 60% 42% at 50% 82%, var(--card-sunk) 0%, transparent 72%);
 }
-.spec-hero svg{ width:220px; height:auto; }
+
+/* ---------- ring stage: SVG band/setting + 3D diamond overlay ---------- */
+.ring-stage-frame{ position:relative; width:100%; margin:0 auto; }
+.ring-stage-frame svg.ring-scene{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+.diamond3d-mount{ position:absolute; }
+.diamond3d-mount canvas{ display:block; width:100% !important; height:100% !important; }
+.diamond3d-caption{
+  font-size:11px; color:var(--taupe); letter-spacing:.01em; text-align:center;
+  font-variant-numeric:tabular-nums;
+}
 .spec-heading{ text-align:center; padding:4px 24px 28px; }
 .spec-heading h2{ font-size:26px; }
 .spec-heading p{ margin:6px 0 0; color:var(--taupe); font-size:13.5px; }
@@ -439,25 +446,13 @@ input[type="range"]::-moz-range-thumb{
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
 }
-.sparkle{ animation:sparkle-pulse 3.4s ease-in-out infinite; transform-origin:center; }
-.sparkle.s2{ animation-delay:1.1s; }
-@keyframes sparkle-pulse{
-  0%,100%{ opacity:0.35; transform:scale(0.85); }
-  50%{ opacity:1; transform:scale(1.05); }
-}
-@media (prefers-reduced-motion: reduce){
-  .sparkle{ animation:none; opacity:0.75; }
-}
-
 .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
 /* ---------- ring scene (svg) ---------- */
-.ring-scene{ width:100%; height:auto; overflow:visible; }
 .gem-outer{ fill:var(--gem-fill); stroke:var(--gem-stroke); stroke-width:1.4; }
 .gem-table{ fill:var(--gem-table); stroke:var(--gem-stroke); stroke-width:0.9; opacity:0.92; }
 .gem-facet{ stroke:var(--gem-facet); stroke-width:0.75; opacity:0.85; }
 .gem-step{ fill:none; stroke:var(--gem-facet); stroke-width:0.9; }
-.gem-sparkle{ fill:var(--gem-sparkle); opacity:0.85; }
 .melee{ fill:var(--melee-fill); stroke:var(--gem-stroke); stroke-width:0.7; }
 .prong{ stroke-width:0.6; }
 .mini-icon .gem-outer,.mini-icon .gem-table{ stroke-width:1.1; }

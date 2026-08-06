@@ -65,6 +65,31 @@ function caratScale(carat){
   return 0.74 + t * 0.82;
 }
 
+/* Shared layout math for the ring preview: where the center gem sits
+   within RingScene's viewBox, so the 3D overlay (RingStage, below)
+   can line up a canvas over the same spot without duplicating
+   RingScene's own gw/gh/position logic. */
+function gemFrame(shape, carat, bandOn){
+  var scale = caratScale(carat);
+  var box = GEM_BOX[shape] || GEM_BOX.round;
+  var unit = 24;
+  return { viewW:300, viewH: bandOn?428:300, cx:150, cy:100, gw:box.w*unit*scale, gh:box.h*unit*scale };
+}
+
+/* Real-world 1ct anchor mm dimensions, mirroring diamond3d.js's
+   SHAPE_DIMS_1CT — kept separate since this side only needs it for
+   the caption text, not full geometry. */
+var SHAPE_DIMS_1CT = {
+  round:{length:6.5,width:6.5}, oval:{length:7.7,width:5.7}, emerald:{length:7.0,width:5.0},
+  princess:{length:5.5,width:5.5}, pear:{length:8.0,width:5.3}, cushion:{length:6.0,width:6.0},
+  marquise:{length:9.0,width:4.5}
+};
+function shapeDimsLabel(shape, carat){
+  var a = SHAPE_DIMS_1CT[shape] || SHAPE_DIMS_1CT.round;
+  var s = Math.pow(Math.max(0.2, carat||1), 1/3);
+  return (a.length*s).toFixed(2) + ' × ' + (a.width*s).toFixed(2) + ' mm';
+}
+
 /* ============================================================
    GEOMETRY / GEM BUILDERS
    ============================================================ */
@@ -198,22 +223,6 @@ function buildGem(shape,w,hh,detailed,keyBase,uid){
     case 'marquise': return gemMarquise(w,hh,detailed,keyBase,uid);
     default:         return gemRadial(w,hh,24,0.42,3,detailed,keyBase,uid);
   }
-}
-
-function gemHighlightArc(w,hh,keyBase){
-  /* Sits opposite the gradient's own bright hotspot (upper-left, see
-     gemGradientDefs) so this crisp stroke reads as a distinct glint
-     against the gradient's cooler mid-tone, rather than blending into
-     its own highlight. */
-  var x1=w*0.18, y1=-hh*0.58, x2=w*0.64, y2=-hh*0.28, cx=w*0.6, cy=-hh*0.7;
-  var d = 'M '+x1.toFixed(1)+','+y1.toFixed(1)+' Q '+cx.toFixed(1)+','+cy.toFixed(1)+' '+x2.toFixed(1)+','+y2.toFixed(1);
-  return h('path',{ key:keyBase, d:d, fill:'none', stroke:'var(--gem-hi)', strokeWidth:Math.max(1.1,w*0.075), strokeLinecap:'round', opacity:0.8 });
-}
-
-function sparkleMark(cx,cy,s,key){
-  var d = 'M '+cx+','+(cy-s)+' L '+(cx+s*0.22)+','+(cy-s*0.22)+' L '+(cx+s)+','+cy+' L '+(cx+s*0.22)+','+(cy+s*0.22)+
-    ' L '+cx+','+(cy+s)+' L '+(cx-s*0.22)+','+(cy+s*0.22)+' L '+(cx-s)+','+cy+' L '+(cx-s*0.22)+','+(cy-s*0.22)+' Z';
-  return h('path',{ d:d, className:'gem-sparkle sparkle ' + (key==='s2'?'s2':''), key:key });
 }
 
 function prongMark(x,y,rot,fill,stroke,key){
@@ -366,11 +375,9 @@ function RingScene(props){
   var ringBandDetail = props.ringBandDetail || 'plain';
   var ringBandWidth = props.ringBandWidth || (BAND_WIDTH_CFG ? BAND_WIDTH_CFG.default : 2.2);
   var metal = findMetal(metalId) || METALS[0];
-  var scale = caratScale(carat);
-  var box = GEM_BOX[shape] || GEM_BOX.round;
-  var unit = 24;
-  var gw = box.w*unit*scale, gh = box.h*unit*scale;
-  var gemCx = 150, gemCy = 100;
+  var frame = gemFrame(shape, carat, bandOn);
+  var gw = frame.gw, gh = frame.gh;
+  var gemCx = frame.cx, gemCy = frame.cy;
   var bandCx = 150, bandCy = 178, bandRx = 88, bandRy = 70;
   var bandStrokeW = 6 + ringBandWidth*4.1;
   var strokeUrl = 'url(#metalGrad-'+metal.id+'-'+uid+')';
@@ -402,20 +409,18 @@ function RingScene(props){
     });
   }
 
+  /* Center gem itself is rendered by the 3D viewer, overlaid on top
+     of this SVG at the same spot (see gemFrame/RingStage) — only the
+     prongs that appear to grip it stay here. */
   kids.push(h('g',{ key:'center', transform:'translate('+gemCx+','+gemCy+')' },
-    buildGem(shape, gw, gh, true, 'ctr', uid),
     prongMark(gw*0.7,-gh*0.7,45,metal.mid,metal.dark,'pa'),
     prongMark(gw*0.7,gh*0.7,135,metal.mid,metal.dark,'pb'),
     prongMark(-gw*0.7,gh*0.7,-135,metal.mid,metal.dark,'pc'),
-    prongMark(-gw*0.7,-gh*0.7,-45,metal.mid,metal.dark,'pd'),
-    gemHighlightArc(gw,gh,'hi'),
-    sparkleMark(-gw*0.34,-gh*0.42,3.6,'s1'),
-    sparkleMark(gw*0.42,gh*0.18,2.7,'s2')
+    prongMark(-gw*0.7,-gh*0.7,-45,metal.mid,metal.dark,'pd')
   ));
 
-  var viewH = 300;
+  var viewH = frame.viewH;
   if (bandOn){
-    viewH = 428;
     var wCx = 150, wCy = 350, wRx = 90, wRy = 70;
     kids.push(h('ellipse',{ key:'wbandShadow', cx:wCx, cy:wCy+wRy*0.6, rx:wRx*0.7, ry:wRy*0.15, style:{ fill:'var(--ring-shadow)' }, filter:'url(#softShadow-'+uid+')' }));
     if (bandStyle==='curved'){
@@ -430,6 +435,79 @@ function RingScene(props){
   }
 
   return h('svg',{ viewBox:'0 0 300 '+viewH, className:'ring-scene', role:'img', 'aria-label':'Ring preview: '+shapeLabel(shape)+' diamond, '+(setting||'')+' setting, '+metal.label }, kids);
+}
+
+/* ============================================================
+   3D DIAMOND VIEWER
+
+   Mounts a three.js scene (diamond3d.js, loaded as an ES module from
+   shell_template.html) into a plain div and drives it from React
+   props. The module isn't guaranteed loaded by the time this effect
+   first runs, so it polls briefly rather than assuming readiness.
+   ============================================================ */
+function Diamond3DViewer(props){
+  var containerRef = useRef(null);
+  var optsRef = useRef(null);
+  optsRef.current = { shape:props.shape, carat:props.carat, cut:props.cut, metalColors:props.metal };
+
+  useEffect(function(){
+    var el = containerRef.current;
+    if (!el) return;
+    var cancelled = false;
+    function tryApply(){
+      if (cancelled) return;
+      if (window.GracieDiamond3D){
+        window.GracieDiamond3D.update(el, optsRef.current);
+      } else {
+        setTimeout(tryApply, 60);
+      }
+    }
+    tryApply();
+    return function(){ cancelled = true; };
+  }, [props.shape, props.carat, props.cut, props.metal && props.metal.mid]);
+
+  useEffect(function(){
+    var el = containerRef.current;
+    return function(){
+      if (el && window.GracieDiamond3D) window.GracieDiamond3D.unmount(el);
+    };
+  }, []);
+
+  return h('div', { className:'diamond3d-mount', ref:containerRef, style:props.style });
+}
+
+/* Wraps the SVG ring (band/setting/prongs) and the 3D diamond canvas
+   together, positioning the canvas over the spot RingScene leaves
+   empty for the center stone (see gemFrame + the "center" group
+   comment in RingScene above). */
+function RingStage(props){
+  var sel = props.sel, quote = props.quote, uid = props.uid, maxWidth = props.maxWidth;
+  var diamond = quote.diamond;
+  var carat = diamond ? diamond.carat : 1;
+  var frame = gemFrame(sel.shape, carat, sel.bandOn);
+  /* The 3D stone needs real screen space to show facets/fire — sizing
+     the overlay tightly to the SVG gem's own (often tiny) footprint,
+     like the prongs do, would shrink it to a blur. Pad generously and
+     floor it, capped so it never swallows the band below. */
+  var wPct = Math.max(34, (frame.gw*2.3*2 / frame.viewW) * 100);
+  var hPct = Math.max(30, (frame.gh*2.3*2 / frame.viewH) * 100);
+  wPct = Math.min(wPct, 62);
+  hPct = Math.min(hPct, 46);
+  var leftPct = ((frame.cx / frame.viewW) * 100) - wPct/2;
+  var topPct = ((frame.cy / frame.viewH) * 100) - hPct/2;
+  var metal = quote.metal || METALS[0];
+  return h('div', null,
+    h('div', { className:'ring-stage-frame', style:{ maxWidth:maxWidth, aspectRatio:frame.viewW+' / '+frame.viewH } },
+      h(RingScene, { shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:carat, bandOn:sel.bandOn, bandStyle:sel.bandStyle, ringBandProfile:sel.ringBandProfile, ringBandDetail:sel.ringBandDetail, ringBandWidth:sel.ringBandWidth, uid:uid }),
+      h(Diamond3DViewer, {
+        key:'d3d-'+uid,
+        shape:sel.shape, carat:carat, cut: diamond ? diamond.cut : 'Excellent',
+        metal:{ light:metal.light, mid:metal.mid, dark:metal.dark },
+        style:{ left:leftPct+'%', top:topPct+'%', width:wPct+'%', height:hPct+'%' }
+      })
+    ),
+    h('p', { className:'diamond3d-caption' }, shapeDimsLabel(sel.shape, carat) + ' · drag the stone to rotate')
+  );
 }
 
 function RingGlyph(props){
@@ -569,7 +647,7 @@ function PreviewTray(props){
       h('span',{ className:'tray-toggle' }, ChevronIcon())
     ),
     h('div',{ className:'tray-detail' },
-      h('div',{ className:'tray-stage' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:diamond?diamond.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, ringBandProfile:sel.ringBandProfile, ringBandDetail:sel.ringBandDetail, ringBandWidth:sel.ringBandWidth, uid:'tray' })),
+      h('div',{ className:'tray-stage' }, h(RingStage,{ sel:sel, quote:quote, uid:'tray', maxWidth:300 })),
       h('div',{ className:'chip-row' },
         h('span',{ className:'chip' }, shapeLabel(sel.shape)),
         quote.setting && h('span',{ className:'chip' }, quote.setting.label),
@@ -937,7 +1015,7 @@ function SpecCard(props){
   var sel = props.sel, quote = props.quote;
   var d = quote.diamond;
   return h('div',{ className:'spec-card' },
-    h('div',{ className:'spec-hero' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:d?d.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, ringBandProfile:sel.ringBandProfile, ringBandDetail:sel.ringBandDetail, ringBandWidth:sel.ringBandWidth, uid:'spec' })),
+    h('div',{ className:'spec-hero' }, h(RingStage,{ sel:sel, quote:quote, uid:'spec', maxWidth:260 })),
     h('div',{ className:'spec-heading' },
       h('span',{ className:'eyebrow' }, 'The Specification'),
       h('h2',{ className:'serif' }, shapeLabel(sel.shape)+' '+(quote.setting?quote.setting.label:'')),
