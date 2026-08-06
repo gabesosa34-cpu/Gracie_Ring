@@ -776,6 +776,154 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 
 </script>
 <script>
+/* ==============================================================
+   Diamond inventory — MOCK STONES, but CALIBRATED prices.
+
+   These 30 diamonds are invented (no real GIA report backs any of
+   them), but each price is derived from real August 2026 market
+   medians rather than guessed: a log-log carat/price curve fit
+   through round G-color/VS2/Excellent benchmarks (0.5ct $1,400 —
+   3.0ct $65,000), then adjusted per-stone by real shape/color/
+   clarity/cut multipliers pulled from the same market data (e.g.
+   emerald ≈ 65% of round at equal specs, D color ≈ 1.39x G, VVS2
+   ≈ 1.33x VS2, Very Good cut ≈ 0.93x Excellent). Source: aggregated
+   retail-listing index (James Allen/Blue Nile/Brilliant Earth/
+   Whiteflash/Ritani), reported via thediamondprice.com and
+   diamonds.pro, trailing-90-day data as of 2026-08-06.
+
+   This is still the seam for a real inventory feed, not a
+   replacement for one — replace the array below with diamonds
+   sourced from a vendor (e.g. a licensed feed from James Allen /
+   Blue Nile / Rare Carat, or a jeweler's own POS export) to go live
+   with real stock. Vendor pricing APIs are almost always
+   server-side/B2B (CORS-blocked, keyed), so the realistic
+   integration is: a small server-side or build-time script pulls
+   the feed and regenerates this file, rather than the browser
+   fetching it directly at runtime. That keeps the app fully static
+   (works as a plain file, an Artifact, or embedded in Streamlit)
+   while still reflecting current inventory whenever this file is
+   regenerated.
+
+   Required fields per diamond:
+     id        string   unique, stable across regenerations if possible
+     shape     string   must match one of SHAPES[].id in app.js
+                         (round | oval | emerald | princess | pear | cushion | marquise)
+     carat     number
+     cut       string   e.g. 'Excellent' | 'Very Good' | 'Good'
+     clarity   string   e.g. 'FL' | 'IF' | 'VVS1' | 'VVS2' | 'VS1' | 'VS2' | 'SI1' | 'SI2'
+     color     string   'D'–'J' (GIA color scale)
+     price     number   USD, whole dollars
+   ============================================================== */
+window.GracieDiamonds = [
+  { id:'d1',  shape:'round',    carat:0.50, cut:'Very Good', clarity:'VS2',  color:'G', price:1300 },
+  { id:'d2',  shape:'round',    carat:0.71, cut:'Excellent',  clarity:'VS1',  color:'F', price:2945 },
+  { id:'d3',  shape:'round',    carat:1.02, cut:'Excellent',  clarity:'VVS2', color:'F', price:8240 },
+  { id:'d4',  shape:'round',    carat:1.55, cut:'Excellent',  clarity:'VS1',  color:'D', price:21170 },
+  { id:'d5',  shape:'round',    carat:2.10, cut:'Excellent',  clarity:'IF',   color:'D', price:66635 },
+
+  { id:'d6',  shape:'oval',     carat:0.65, cut:'Very Good',  clarity:'SI1',  color:'H', price:1040 },
+  { id:'d7',  shape:'oval',     carat:1.15, cut:'Excellent',  clarity:'VS2',  color:'G', price:5375 },
+  { id:'d8',  shape:'oval',     carat:1.80, cut:'Excellent',  clarity:'VS1',  color:'F', price:21245 },
+  { id:'d9',  shape:'oval',     carat:2.40, cut:'Very Good',  clarity:'VVS2', color:'E', price:49685 },
+
+  { id:'d10', shape:'emerald',  carat:0.90, cut:'Very Good',  clarity:'VS2',  color:'G', price:2230 },
+  { id:'d11', shape:'emerald',  carat:1.30, cut:'Excellent',  clarity:'VS1',  color:'F', price:7965 },
+  { id:'d12', shape:'emerald',  carat:1.95, cut:'Excellent',  clarity:'VVS1', color:'D', price:31005 },
+  { id:'d13', shape:'emerald',  carat:2.75, cut:'Very Good',  clarity:'VS2',  color:'G', price:32010 },
+
+  { id:'d14', shape:'princess', carat:0.55, cut:'Good',       clarity:'SI2',  color:'H', price:545 },
+  { id:'d15', shape:'princess', carat:1.00, cut:'Very Good',  clarity:'VS1',  color:'F', price:4630 },
+  { id:'d16', shape:'princess', carat:1.48, cut:'Excellent',  clarity:'VVS2', color:'E', price:15795 },
+  { id:'d17', shape:'princess', carat:2.05, cut:'Excellent',  clarity:'VS1',  color:'D', price:31100 },
+
+  { id:'d18', shape:'pear',     carat:0.70, cut:'Very Good',  clarity:'SI1',  color:'G', price:1325 },
+  { id:'d19', shape:'pear',     carat:1.20, cut:'Excellent',  clarity:'VS2',  color:'F', price:7680 },
+  { id:'d20', shape:'pear',     carat:1.65, cut:'Excellent',  clarity:'VS1',  color:'E', price:19610 },
+  { id:'d21', shape:'pear',     carat:2.30, cut:'Very Good',  clarity:'VVS2', color:'D', price:50940 },
+
+  { id:'d22', shape:'cushion',  carat:0.60, cut:'Very Good',  clarity:'SI1',  color:'H', price:825 },
+  { id:'d23', shape:'cushion',  carat:1.05, cut:'Excellent',  clarity:'VS2',  color:'G', price:3805 },
+  { id:'d24', shape:'cushion',  carat:1.50, cut:'Excellent',  clarity:'VS1',  color:'F', price:11980 },
+  { id:'d25', shape:'cushion',  carat:2.20, cut:'Excellent',  clarity:'VVS2', color:'E', price:38080 },
+  { id:'d26', shape:'cushion',  carat:3.05, cut:'Very Good',  clarity:'VS1',  color:'D', price:68850 },
+
+  { id:'d27', shape:'marquise', carat:0.75, cut:'Very Good',  clarity:'VS2',  color:'G', price:1710 },
+  { id:'d28', shape:'marquise', carat:1.25, cut:'Excellent',  clarity:'VS1',  color:'F', price:8945 },
+  { id:'d29', shape:'marquise', carat:1.90, cut:'Excellent',  clarity:'VVS2', color:'E', price:30725 },
+  { id:'d30', shape:'marquise', carat:2.60, cut:'Excellent',  clarity:'VS1',  color:'D', price:58080 }
+];
+
+</script>
+<script>
+/* ==============================================================
+   Setting / metal / band pricing — MOCK DATA, not a real price list.
+
+   This is the seam for a jeweler's actual current price sheet.
+   Swappable numbers (update from real quotes/spot prices):
+     SETTINGS[].base       USD, setting labor + mounting, in the
+                            "included" metal tier (see METALS below)
+     METALS[].multiplier   applied to SETTINGS[].base and
+                            BAND_STYLES[].base — should track the real
+                            cost relationship between platinum/gold at
+                            current spot prices, not just relative vanity
+     BAND_STYLES[].base    USD, same convention as SETTINGS[].base
+
+   Everything else (label, desc copy, METALS[].light/mid/dark render
+   colors) is product/design content, not pricing — leave those alone
+   when refreshing prices.
+
+   BAND_PROFILES / BAND_DETAILS / BAND_WIDTH / ENGRAVING_FEE below
+   price the engagement ring's OWN band construction (profile, width,
+   surface detail, engraving) — separate from BAND_STYLES above, which
+   prices the optional separate matching WEDDING band. Same swap rules
+   apply: BAND_DETAILS[].upcharge and BAND_WIDTH.perMmRate are the
+   numbers to refresh from a real price sheet; BAND_PROFILES carry no
+   price (see app.js comments on why — profile is a shaping choice,
+   not an added cost, in this model).
+   ============================================================== */
+window.GraciePricing = {
+  SETTINGS: [
+    { id:'solitaire',   label:'Solitaire',   base:620,  desc:'A single stone, unadorned — the quietest setting, and the one that puts the diamond first.' },
+    { id:'pave',        label:'Pavé',   base:980,  desc:'Diamonds set the length of the band, catching light from every angle.' },
+    { id:'halo',        label:'Halo',        base:1240, desc:'A ring of smaller diamonds encircles the center stone, adding presence and light.' },
+    { id:'three-stone', label:'Three-Stone', base:1680, desc:'Two side stones flank the center — past, present, and future.' }
+  ],
+
+  METALS: [
+    { id:'platinum',    label:'Platinum',        multiplier:1.42, light:'#F7F7F4', mid:'#C9CAC3', dark:'#A6A79E' },
+    { id:'white-gold',  label:'18k White Gold',  multiplier:1.00, light:'#F0EDE5', mid:'#CBC7B9', dark:'#A29C8A' },
+    { id:'yellow-gold', label:'18k Yellow Gold', multiplier:1.00, light:'#F4DA8D', mid:'#D4AA49', dark:'#A9822E' },
+    { id:'rose-gold',   label:'18k Rose Gold',   multiplier:1.06, light:'#F0C2AC', mid:'#CF8E70', dark:'#A96A4E' }
+  ],
+
+  BAND_STYLES: [
+    { id:'plain',  label:'Plain Band', base:420, desc:'A clean, comfortable band — the quiet counterpart.' },
+    { id:'pave',   label:'Pavé Band', base:780, desc:'Diamonds trace the top half of the band.' },
+    { id:'curved', label:'Curved Band', base:690, desc:'Gently contoured to nest against the engagement ring.' }
+  ],
+
+  BAND_PROFILES: [
+    { id:'comfort',     label:'Comfort Fit',    desc:'Rounded on the inside — the most comfortable choice for everyday wear.' },
+    { id:'flat',        label:'Flat',           desc:'A flat outer face for a clean, architectural look.' },
+    { id:'knife-edge',  label:'Knife-Edge',     desc:'A raised center ridge tapering to sharp edges, catching more light.' },
+    { id:'milgrain',    label:'Milgrain Edge',  desc:'A fine beaded edge along both rails, for a vintage touch.' }
+  ],
+
+  BAND_DETAILS: [
+    { id:'plain',     label:'Plain',           upcharge:0,   desc:'No added texture or stones — the band speaks for itself.' },
+    { id:'pave',      label:'Pavé',            upcharge:540, desc:'Diamonds set along the face of the band.' },
+    { id:'channel',   label:'Channel-Set',     upcharge:610, desc:'Diamonds set flush between two polished rails.' },
+    { id:'twisted',   label:'Twisted / Rope',  upcharge:340, desc:'A gently spiraled rope texture.' },
+    { id:'hammered',  label:'Hammered',        upcharge:260, desc:'A hand-hammered, matte texture.' }
+  ],
+
+  BAND_WIDTH: { min:1.5, max:4.0, step:0.1, default:2.2, perMmRate:200 },
+
+  ENGRAVING_FEE: 45
+};
+
+</script>
+<script>
 (function(){
 "use strict";
 var h = React.createElement;
@@ -807,66 +955,24 @@ var GEM_BOX = {
   marquise: { w:0.50, h:1.06 }
 };
 
-var SETTINGS = [
-  { id:'solitaire',   label:'Solitaire',   base:620,  desc:'A single stone, unadorned — the quietest setting, and the one that puts the diamond first.' },
-  { id:'pave',        label:'Pavé',   base:980,  desc:'Diamonds set the length of the band, catching light from every angle.' },
-  { id:'halo',        label:'Halo',        base:1240, desc:'A ring of smaller diamonds encircles the center stone, adding presence and light.' },
-  { id:'three-stone', label:'Three-Stone', base:1680, desc:'Two side stones flank the center — past, present, and future.' }
-];
+/* Pricing (SETTINGS/METALS/BAND_STYLES) lives in pricing.js, and the
+   diamond inventory lives in diamonds.js — both loaded before this
+   script. Swap either file's contents for real data without touching
+   anything below; see the schema comments in those files. */
+var SETTINGS = window.GraciePricing.SETTINGS;
+var METALS = window.GraciePricing.METALS;
+var BAND_STYLES = window.GraciePricing.BAND_STYLES;
+var DIAMONDS = window.GracieDiamonds;
 
-var METALS = [
-  { id:'platinum',    label:'Platinum',        multiplier:1.42, light:'#F7F7F4', mid:'#C9CAC3', dark:'#A6A79E' },
-  { id:'white-gold',  label:'18k White Gold',  multiplier:1.00, light:'#F0EDE5', mid:'#CBC7B9', dark:'#A29C8A' },
-  { id:'yellow-gold', label:'18k Yellow Gold', multiplier:1.00, light:'#F4DA8D', mid:'#D4AA49', dark:'#A9822E' },
-  { id:'rose-gold',   label:'18k Rose Gold',   multiplier:1.06, light:'#F0C2AC', mid:'#CF8E70', dark:'#A96A4E' }
-];
+/* Band Design (profile/width/detail/engraving) — for the engagement
+   ring's own band, distinct from BAND_STYLES above (the optional
+   separate matching wedding band). Same swap seam as the rest. */
+var BAND_PROFILES = window.GraciePricing.BAND_PROFILES;
+var BAND_DETAILS = window.GraciePricing.BAND_DETAILS;
+var BAND_WIDTH_CFG = window.GraciePricing.BAND_WIDTH;
+var ENGRAVING_FEE = window.GraciePricing.ENGRAVING_FEE;
 
-var BAND_STYLES = [
-  { id:'plain',  label:'Plain Band', base:420, desc:'A clean, comfortable band — the quiet counterpart.' },
-  { id:'pave',   label:'Pavé Band', base:780, desc:'Diamonds trace the top half of the band.' },
-  { id:'curved', label:'Curved Band', base:690, desc:'Gently contoured to nest against the engagement ring.' }
-];
-
-var DIAMONDS = [
-  { id:'d1',  shape:'round',    carat:0.50, cut:'Very Good', clarity:'VS2',  color:'G', price:1450 },
-  { id:'d2',  shape:'round',    carat:0.71, cut:'Excellent',  clarity:'VS1',  color:'F', price:2890 },
-  { id:'d3',  shape:'round',    carat:1.02, cut:'Excellent',  clarity:'VVS2', color:'F', price:6750 },
-  { id:'d4',  shape:'round',    carat:1.55, cut:'Excellent',  clarity:'VS1',  color:'D', price:12400 },
-  { id:'d5',  shape:'round',    carat:2.10, cut:'Excellent',  clarity:'IF',   color:'D', price:24800 },
-
-  { id:'d6',  shape:'oval',     carat:0.65, cut:'Very Good',  clarity:'SI1',  color:'H', price:1580 },
-  { id:'d7',  shape:'oval',     carat:1.15, cut:'Excellent',  clarity:'VS2',  color:'G', price:5200 },
-  { id:'d8',  shape:'oval',     carat:1.80, cut:'Excellent',  clarity:'VS1',  color:'F', price:11600 },
-  { id:'d9',  shape:'oval',     carat:2.40, cut:'Very Good',  clarity:'VVS2', color:'E', price:19800 },
-
-  { id:'d10', shape:'emerald',  carat:0.90, cut:'Very Good',  clarity:'VS2',  color:'G', price:3400 },
-  { id:'d11', shape:'emerald',  carat:1.30, cut:'Excellent',  clarity:'VS1',  color:'F', price:6900 },
-  { id:'d12', shape:'emerald',  carat:1.95, cut:'Excellent',  clarity:'VVS1', color:'D', price:17500 },
-  { id:'d13', shape:'emerald',  carat:2.75, cut:'Very Good',  clarity:'VS2',  color:'G', price:22400 },
-
-  { id:'d14', shape:'princess', carat:0.55, cut:'Good',       clarity:'SI2',  color:'H', price:1150 },
-  { id:'d15', shape:'princess', carat:1.00, cut:'Very Good',  clarity:'VS1',  color:'F', price:4600 },
-  { id:'d16', shape:'princess', carat:1.48, cut:'Excellent',  clarity:'VVS2', color:'E', price:9800 },
-  { id:'d17', shape:'princess', carat:2.05, cut:'Excellent',  clarity:'VS1',  color:'D', price:16200 },
-
-  { id:'d18', shape:'pear',     carat:0.70, cut:'Very Good',  clarity:'SI1',  color:'G', price:1900 },
-  { id:'d19', shape:'pear',     carat:1.20, cut:'Excellent',  clarity:'VS2',  color:'F', price:5400 },
-  { id:'d20', shape:'pear',     carat:1.65, cut:'Excellent',  clarity:'VS1',  color:'E', price:9200 },
-  { id:'d21', shape:'pear',     carat:2.30, cut:'Very Good',  clarity:'VVS2', color:'D', price:20600 },
-
-  { id:'d22', shape:'cushion',  carat:0.60, cut:'Very Good',  clarity:'SI1',  color:'H', price:1650 },
-  { id:'d23', shape:'cushion',  carat:1.05, cut:'Excellent',  clarity:'VS2',  color:'G', price:4900 },
-  { id:'d24', shape:'cushion',  carat:1.50, cut:'Excellent',  clarity:'VS1',  color:'F', price:8700 },
-  { id:'d25', shape:'cushion',  carat:2.20, cut:'Excellent',  clarity:'VVS2', color:'E', price:18900 },
-  { id:'d26', shape:'cushion',  carat:3.05, cut:'Very Good',  clarity:'VS1',  color:'D', price:34500 },
-
-  { id:'d27', shape:'marquise', carat:0.75, cut:'Very Good',  clarity:'VS2',  color:'G', price:2100 },
-  { id:'d28', shape:'marquise', carat:1.25, cut:'Excellent',  clarity:'VS1',  color:'F', price:5600 },
-  { id:'d29', shape:'marquise', carat:1.90, cut:'Excellent',  clarity:'VVS2', color:'E', price:13400 },
-  { id:'d30', shape:'marquise', carat:2.60, cut:'Excellent',  clarity:'VS1',  color:'D', price:24200 }
-];
-
-var CARAT_MIN = 0.40, CARAT_MAX = 3.20, PRICE_CEIL = 35000;
+var CARAT_MIN = 0.40, CARAT_MAX = 3.20, PRICE_CEIL = 70000;
 
 /* ============================================================
    HELPERS
@@ -876,6 +982,8 @@ function shapeLabel(id){ var s = SHAPES.filter(function(x){return x.id===id;})[0
 function findSetting(id){ return SETTINGS.filter(function(x){return x.id===id;})[0] || null; }
 function findMetal(id){ return METALS.filter(function(x){return x.id===id;})[0] || null; }
 function findBand(id){ return BAND_STYLES.filter(function(x){return x.id===id;})[0] || null; }
+function findBandProfile(id){ return BAND_PROFILES.filter(function(x){return x.id===id;})[0] || null; }
+function findBandDetail(id){ return BAND_DETAILS.filter(function(x){return x.id===id;})[0] || null; }
 
 function caratScale(carat){
   var c = Math.max(CARAT_MIN, Math.min(CARAT_MAX, carat || 1));
@@ -1052,6 +1160,73 @@ function curvedBandPath(cx,cy,rx,ry,strokeUrl,keyBase){
   return h('path',{ key:keyBase, d:d, fill:'none', stroke:strokeUrl, strokeWidth:13, strokeLinejoin:'round' });
 }
 
+function arcPoints(cx,cy,rx,ry,startDeg,endDeg,n){
+  var pts = [];
+  for (var i=0;i<n;i++){
+    var t = (startDeg + ((endDeg-startDeg)*i)/(n-1)) * Math.PI/180;
+    pts.push([cx+rx*Math.cos(t), cy+ry*Math.sin(t)]);
+  }
+  return pts;
+}
+function arcPolyStr(pts){ return pts.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+
+/* Band profile = cross-section shape, rendered as shading/highlight
+   overlays on top of the base band stroke (comfort=soft rounded
+   highlight, flat=hard edge line, knife-edge=bright centerline,
+   milgrain=beaded edges). No price impact — see pricing.js comment. */
+function bandProfileOverlay(cx,cy,rx,ry,strokeW,profile,metal,keyPrefix){
+  if (profile==='flat'){
+    var inset = strokeW*0.36;
+    return [ h('ellipse',{ key:keyPrefix+'-edge', cx:cx, cy:cy, rx:rx-inset, ry:ry-inset, fill:'none', stroke:metal.light, strokeWidth:1.1, opacity:0.75 }) ];
+  }
+  if (profile==='knife-edge'){
+    return [ h('ellipse',{ key:keyPrefix+'-ridge', cx:cx, cy:cy, rx:rx, ry:ry, fill:'none', stroke:metal.light, strokeWidth:1.3, opacity:0.9 }) ];
+  }
+  if (profile==='milgrain'){
+    var kids = [];
+    var outer = arcPoints(cx,cy,rx+strokeW*0.46,ry+strokeW*0.40,-176,-4,24);
+    var inner = arcPoints(cx,cy,rx-strokeW*0.46,ry-strokeW*0.40,-176,-4,24);
+    outer.forEach(function(p,i){ kids.push(h('circle',{ key:keyPrefix+'-bo'+i, cx:p[0], cy:p[1], r:0.85, fill:metal.dark })); });
+    inner.forEach(function(p,i){ kids.push(h('circle',{ key:keyPrefix+'-bi'+i, cx:p[0], cy:p[1], r:0.85, fill:metal.dark })); });
+    return kids;
+  }
+  /* comfort (default): soft rounded highlight down the center */
+  return [ h('ellipse',{ key:keyPrefix+'-hl', cx:cx, cy:cy, rx:rx, ry:ry, fill:'none', stroke:metal.light, strokeWidth:Math.max(1.2,strokeW*0.34), opacity:0.5 }) ];
+}
+
+/* Band detail = surface texture/accent stones along the band's
+   front-facing arc (skip the ~40° nearest the head, where prongs sit). */
+function bandDetailOverlay(cx,cy,rx,ry,strokeW,detail,metal,keyPrefix){
+  var startA = -172, endA = -8;
+  if (detail==='pave'){
+    return [ paveArc(cx,cy,rx,ry,startA,-100,6,keyPrefix+'-pv-l'), paveArc(cx,cy,rx,ry,-80,endA,6,keyPrefix+'-pv-r') ];
+  }
+  if (detail==='channel'){
+    var kids = [];
+    var railOuter = arcPoints(cx,cy,rx+strokeW*0.32,ry+strokeW*0.28,startA,endA,20);
+    var railInner = arcPoints(cx,cy,rx-strokeW*0.32,ry-strokeW*0.28,startA,endA,20);
+    kids.push(h('polyline',{ key:keyPrefix+'-ro', points:arcPolyStr(railOuter), fill:'none', stroke:metal.dark, strokeWidth:1 }));
+    kids.push(h('polyline',{ key:keyPrefix+'-ri', points:arcPolyStr(railInner), fill:'none', stroke:metal.dark, strokeWidth:1 }));
+    var gems = arcPoints(cx,cy,rx,ry,startA+8,endA-8,9);
+    gems.forEach(function(p,i){ kids.push(h('rect',{ key:keyPrefix+'-cg'+i, x:p[0]-1.5, y:p[1]-1.5, width:3, height:3, className:'melee' })); });
+    return kids;
+  }
+  if (detail==='twisted'){
+    return arcPoints(cx,cy,rx,ry,startA,endA,20).map(function(p,i){
+      var rot = (i%2===0) ? 34 : -34;
+      return h('line',{ key:keyPrefix+'-tw'+i, x1:p[0]-strokeW*0.34, y1:p[1], x2:p[0]+strokeW*0.34, y2:p[1], stroke:metal.dark, strokeWidth:1, opacity:0.6, transform:'rotate('+rot+' '+p[0].toFixed(1)+' '+p[1].toFixed(1)+')' });
+    });
+  }
+  if (detail==='hammered'){
+    return arcPoints(cx,cy,rx,ry,startA,endA,18).map(function(p,i){
+      var jitter = ((Math.sin(i*12.9898)*43758.5453) % 1 + 1) % 1;
+      var rr = 1.0 + jitter*0.9;
+      return h('ellipse',{ key:keyPrefix+'-hm'+i, cx:p[0]+(jitter-0.5)*2, cy:p[1]+(jitter-0.5)*1.4, rx:rr, ry:rr*0.68, fill:metal.dark, opacity:0.28 });
+    });
+  }
+  return [];
+}
+
 function metalGradientDefs(uid){
   return METALS.map(function(m){
     return h('linearGradient',{ id:'metalGrad-'+m.id+'-'+uid, x1:'15%', y1:'0%', x2:'85%', y2:'100%', key:m.id },
@@ -1068,6 +1243,9 @@ function metalGradientDefs(uid){
 function RingScene(props){
   var shape = props.shape, setting = props.setting, metalId = props.metalId,
       carat = props.carat, bandOn = props.bandOn, bandStyle = props.bandStyle, uid = props.uid;
+  var ringBandProfile = props.ringBandProfile || 'comfort';
+  var ringBandDetail = props.ringBandDetail || 'plain';
+  var ringBandWidth = props.ringBandWidth || (BAND_WIDTH_CFG ? BAND_WIDTH_CFG.default : 2.2);
   var metal = findMetal(metalId) || METALS[0];
   var scale = caratScale(carat);
   var box = GEM_BOX[shape] || GEM_BOX.round;
@@ -1075,13 +1253,16 @@ function RingScene(props){
   var gw = box.w*unit*scale, gh = box.h*unit*scale;
   var gemCx = 150, gemCy = 100;
   var bandCx = 150, bandCy = 178, bandRx = 88, bandRy = 70;
+  var bandStrokeW = 6 + ringBandWidth*4.1;
   var strokeUrl = 'url(#metalGrad-'+metal.id+'-'+uid+')';
 
   var kids = [ h('defs',{ key:'defs' }, metalGradientDefs(uid)) ];
 
-  kids.push(h('ellipse',{ key:'band', cx:bandCx, cy:bandCy, rx:bandRx, ry:bandRy, fill:'none', stroke:strokeUrl, strokeWidth:15 }));
+  kids.push(h('ellipse',{ key:'band', cx:bandCx, cy:bandCy, rx:bandRx, ry:bandRy, fill:'none', stroke:strokeUrl, strokeWidth:bandStrokeW }));
+  Array.prototype.push.apply(kids, bandProfileOverlay(bandCx,bandCy,bandRx,bandRy,bandStrokeW,ringBandProfile,metal,'e-profile'));
+  Array.prototype.push.apply(kids, bandDetailOverlay(bandCx,bandCy,bandRx,bandRy,bandStrokeW,ringBandDetail,metal,'e-detail'));
 
-  if (setting==='pave'){
+  if (setting==='pave' && ringBandDetail!=='pave'){
     kids.push(paveArc(bandCx,bandCy,bandRx,bandRy,-172,-100,6,'e-pave-l'));
     kids.push(paveArc(bandCx,bandCy,bandRx,bandRy,-80,-8,6,'e-pave-r'));
   }
@@ -1221,10 +1402,22 @@ function computeQuote(sel){
   var diamondPrice = diamond ? diamond.price : 0;
   var settingPrice = setting ? Math.round(setting.base*mult) : 0;
   var bandPrice = band ? Math.round(band.base*mult) : 0;
+
+  /* Band Design — additive, same base*multiplier pattern as above. */
+  var ringBandProfile = findBandProfile(sel.ringBandProfile);
+  var ringBandDetail = findBandDetail(sel.ringBandDetail);
+  var ringBandWidth = sel.ringBandWidth || BAND_WIDTH_CFG.default;
+  var widthOverMin = Math.max(0, ringBandWidth - BAND_WIDTH_CFG.min);
+  var bandWidthPrice = Math.round(widthOverMin * BAND_WIDTH_CFG.perMmRate * mult);
+  var bandDetailPrice = ringBandDetail ? Math.round(ringBandDetail.upcharge*mult) : 0;
+  var engravingPrice = (sel.engraving && sel.engraving.trim()) ? ENGRAVING_FEE : 0;
+
   return {
     diamond:diamond, setting:setting, metal:metal, band:band,
     diamondPrice:diamondPrice, settingPrice:settingPrice, bandPrice:bandPrice,
-    total: diamondPrice+settingPrice+bandPrice
+    ringBandProfile:ringBandProfile, ringBandDetail:ringBandDetail, ringBandWidth:ringBandWidth,
+    bandWidthPrice:bandWidthPrice, bandDetailPrice:bandDetailPrice, engravingPrice:engravingPrice,
+    total: diamondPrice+settingPrice+bandPrice+bandWidthPrice+bandDetailPrice+engravingPrice
   };
 }
 
@@ -1250,7 +1443,7 @@ function PreviewTray(props){
       h('span',{ className:'tray-toggle' }, ChevronIcon())
     ),
     h('div',{ className:'tray-detail' },
-      h('div',{ className:'tray-stage' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:diamond?diamond.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, uid:'tray' })),
+      h('div',{ className:'tray-stage' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:diamond?diamond.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, ringBandProfile:sel.ringBandProfile, ringBandDetail:sel.ringBandDetail, ringBandWidth:sel.ringBandWidth, uid:'tray' })),
       h('div',{ className:'chip-row' },
         h('span',{ className:'chip' }, shapeLabel(sel.shape)),
         quote.setting && h('span',{ className:'chip' }, quote.setting.label),
@@ -1269,6 +1462,18 @@ function PreviewTray(props){
         sel.bandOn && h('div',{ className:'tray-line' },
           h('span',{ className:'k' }, 'Wedding band', quote.band && h('span',{ className:'muted' }, quote.band.label)),
           h('span',{ className:'v tnum' }, quote.band ? fmtMoney(quote.bandPrice) : '—')
+        ),
+        quote.bandWidthPrice>0 && h('div',{ className:'tray-line' },
+          h('span',{ className:'k' }, 'Band width', h('span',{ className:'muted' }, quote.ringBandWidth.toFixed(1)+'mm')),
+          h('span',{ className:'v tnum' }, fmtMoney(quote.bandWidthPrice))
+        ),
+        quote.bandDetailPrice>0 && h('div',{ className:'tray-line' },
+          h('span',{ className:'k' }, 'Band detail', quote.ringBandDetail && h('span',{ className:'muted' }, quote.ringBandDetail.label)),
+          h('span',{ className:'v tnum' }, fmtMoney(quote.bandDetailPrice))
+        ),
+        quote.engravingPrice>0 && h('div',{ className:'tray-line' },
+          h('span',{ className:'k' }, 'Engraving'),
+          h('span',{ className:'v tnum' }, fmtMoney(quote.engravingPrice))
         ),
         h('div',{ className:'tray-total' },
           h('span',{ className:'k' }, 'Estimated total'),
@@ -1333,7 +1538,7 @@ function StoneStep(props){
       ),
       h('div',{ className:'filter-row' },
         h('span',{ className:'field-label' }, h('span',null,'Price, up to'), h('span',{ className:'val' }, fmtMoney(filters.priceMax))),
-        h('input',{ type:'range', min:1000, max:PRICE_CEIL, step:500, value:filters.priceMax,
+        h('input',{ type:'range', min:1000, max:PRICE_CEIL, step:1000, value:filters.priceMax,
           onChange:function(e){ setFilters({ priceMax:parseInt(e.target.value,10) }); },
           'aria-label':'Maximum price' })
       )
@@ -1441,13 +1646,121 @@ function BandStep(props){
 }
 
 /* ============================================================
+   STEP 5 — BAND DESIGN
+   (the engagement ring's own band: profile / width / detail /
+   engraving — distinct from the wedding-band add-on above)
+   ============================================================ */
+function ProfileGlyph(props){
+  var id = props.id;
+  var y=22, x0=8, x1=36, hh=8;
+  var kids = [ h('rect',{ key:'bar', x:x0, y:y-hh, width:x1-x0, height:hh*2,
+    rx: id==='comfort'?hh:(id==='milgrain'?3:2), ry: id==='comfort'?hh:(id==='milgrain'?3:2),
+    fill:'var(--card-sunk)', stroke:'var(--ink-soft)', strokeWidth:1.2 }) ];
+  if (id==='flat'){
+    kids.push(h('line',{ key:'ed', x1:x0+2, y1:y-hh+1.6, x2:x1-2, y2:y-hh+1.6, stroke:'var(--card)', strokeWidth:1.4 }));
+  } else if (id==='knife-edge'){
+    kids.push(h('line',{ key:'rg', x1:x0+2, y1:y, x2:x1-2, y2:y, stroke:'var(--card)', strokeWidth:1.7 }));
+  } else if (id==='milgrain'){
+    for (var i=0;i<7;i++){
+      var xx = x0+3+((x1-x0-6)*i)/6;
+      kids.push(h('circle',{ key:'to'+i, cx:xx, cy:y-hh, r:1, fill:'var(--ink-soft)' }));
+      kids.push(h('circle',{ key:'bo'+i, cx:xx, cy:y+hh, r:1, fill:'var(--ink-soft)' }));
+    }
+  } else {
+    kids.push(h('line',{ key:'hl', x1:x0+3, y1:y, x2:x1-3, y2:y, stroke:'var(--card)', strokeWidth:3, opacity:0.8 }));
+  }
+  return h('svg',{ viewBox:'0 0 44 44', className:'mini-icon', 'aria-hidden':'true' }, kids);
+}
+
+function DetailGlyph(props){
+  var id = props.id;
+  var y=22, x0=6, x1=38, hh=7;
+  var kids = [ h('rect',{ key:'bar', x:x0, y:y-hh, width:x1-x0, height:hh*2, rx:hh*0.5, ry:hh*0.5, fill:'var(--card-sunk)', stroke:'var(--ink-soft)', strokeWidth:1.1 }) ];
+  if (id==='pave'){
+    for (var i=0;i<6;i++){ var xx=x0+4+((x1-x0-8)*i)/5; kids.push(h('circle',{ key:'p'+i, cx:xx, cy:y, r:1.6, className:'melee' })); }
+  } else if (id==='channel'){
+    kids.push(h('line',{ key:'r1', x1:x0+2, y1:y-hh+1.6, x2:x1-2, y2:y-hh+1.6, stroke:'var(--ink-soft)', strokeWidth:0.8 }));
+    kids.push(h('line',{ key:'r2', x1:x0+2, y1:y+hh-1.6, x2:x1-2, y2:y+hh-1.6, stroke:'var(--ink-soft)', strokeWidth:0.8 }));
+    for (var j=0;j<5;j++){ var xx2=x0+5+((x1-x0-10)*j)/4; kids.push(h('rect',{ key:'g'+j, x:xx2-1.3, y:y-1.3, width:2.6, height:2.6, className:'melee' })); }
+  } else if (id==='twisted'){
+    for (var k=0;k<6;k++){
+      var xx3 = x0+4+((x1-x0-8)*k)/5;
+      var rot = (k%2===0) ? 30 : -30;
+      kids.push(h('line',{ key:'t'+k, x1:xx3-hh*0.7, y1:y, x2:xx3+hh*0.7, y2:y, stroke:'var(--ink-soft)', strokeWidth:1, transform:'rotate('+rot+' '+xx3+' '+y+')' }));
+    }
+  } else if (id==='hammered'){
+    for (var m=0;m<7;m++){
+      var xx4 = x0+4+((x1-x0-8)*m)/6;
+      var yy = (m%2===0) ? y-2 : y+2;
+      kids.push(h('circle',{ key:'h'+m, cx:xx4, cy:yy, r:1.1, fill:'var(--ink-soft)', opacity:0.5 }));
+    }
+  }
+  return h('svg',{ viewBox:'0 0 44 44', className:'mini-icon', 'aria-hidden':'true' }, kids);
+}
+
+function BandDesignStep(props){
+  var sel = props.sel, setSel = props.setSel, quote = props.quote;
+  var mult = quote.metal ? quote.metal.multiplier : 1;
+  var width = sel.ringBandWidth || BAND_WIDTH_CFG.default;
+  var engraving = sel.engraving || '';
+  return h('div',null,
+    h('span',{ className:'field-label' }, 'Band profile'),
+    h('div',{ className:'option-list' },
+      BAND_PROFILES.map(function(p){
+        var isSel = sel.ringBandProfile===p.id;
+        return h('button',{ type:'button', key:p.id, className:'option-card'+(isSel?' selected':''), onClick:function(){ setSel({ ringBandProfile:p.id }); }, 'aria-pressed':isSel },
+          h('span',{ className:'option-glyph' }, h(ProfileGlyph,{ id:p.id })),
+          h('span',{ className:'option-body' },
+            h('span',{ className:'option-name' }, p.label),
+            h('span',{ className:'option-desc' }, p.desc)
+          ),
+          h('span',{ className:'option-radio' })
+        );
+      })
+    ),
+    h('div',{ className:'filters', style:{ marginTop:22, gridTemplateColumns:'1fr' } },
+      h('div',{ className:'filter-row' },
+        h('span',{ className:'field-label' }, h('span',null,'Band width'), h('span',{ className:'val' }, width.toFixed(1)+'mm')),
+        h('input',{ type:'range', min:BAND_WIDTH_CFG.min, max:BAND_WIDTH_CFG.max, step:BAND_WIDTH_CFG.step, value:width,
+          onChange:function(e){ setSel({ ringBandWidth:parseFloat(e.target.value) }); },
+          'aria-label':'Band width in millimeters' })
+      )
+    ),
+    h('span',{ className:'field-label', style:{ marginTop:22, display:'block' } }, 'Band detail'),
+    h('div',{ className:'option-list' },
+      BAND_DETAILS.map(function(d){
+        var isSel = sel.ringBandDetail===d.id;
+        var price = Math.round(d.upcharge*mult);
+        return h('button',{ type:'button', key:d.id, className:'option-card'+(isSel?' selected':''), onClick:function(){ setSel({ ringBandDetail:d.id }); }, 'aria-pressed':isSel },
+          h('span',{ className:'option-glyph' }, h(DetailGlyph,{ id:d.id })),
+          h('span',{ className:'option-body' },
+            h('span',{ className:'option-name' }, d.label),
+            h('span',{ className:'option-desc' }, d.desc),
+            h('span',{ className:'option-price tnum' }, price>0 ? fmtMoney(price) : 'Included')
+          ),
+          h('span',{ className:'option-radio' })
+        );
+      })
+    ),
+    h('div',{ className:'field', style:{ marginTop:22, maxWidth:340 } },
+      h('label',{ htmlFor:'bd-engrave' }, 'Engraving (optional)'),
+      h('input',{ id:'bd-engrave', type:'text', maxLength:20, value:engraving,
+        onChange:function(e){ setSel({ engraving:e.target.value.slice(0,20) }); },
+        placeholder:'e.g. Always' }),
+      h('p',{ className:'helptext' }, engraving.length+'/20 characters · engraved inside the band, so it appears in your specification rather than the live preview.')
+    )
+  );
+}
+
+/* ============================================================
    STEP WRAPPER / RAIL
    ============================================================ */
 var STEP_META = [
-  { id:'stone',   title:'The Stone',   eyebrow:'Step 1' },
-  { id:'setting', title:'The Setting', eyebrow:'Step 2' },
-  { id:'metal',   title:'The Metal',   eyebrow:'Step 3' },
-  { id:'band',    title:'The Band',    eyebrow:'Step 4' }
+  { id:'stone',       title:'The Stone',   eyebrow:'Step 1' },
+  { id:'setting',     title:'The Setting', eyebrow:'Step 2' },
+  { id:'metal',       title:'The Metal',   eyebrow:'Step 3' },
+  { id:'band',        title:'The Band',    eyebrow:'Step 4' },
+  { id:'band-design', title:'Band Design', eyebrow:'Step 5' }
 ];
 
 function stepSummary(i, sel, quote){
@@ -1455,6 +1768,7 @@ function stepSummary(i, sel, quote){
   if (i===1) return quote.setting ? quote.setting.label : 'Not yet chosen';
   if (i===2) return quote.metal ? quote.metal.label : 'Not yet chosen';
   if (i===3) return sel.bandOn && quote.band ? quote.band.label+' — added' : 'No wedding band';
+  if (i===4) return (quote.ringBandProfile?quote.ringBandProfile.label:'')+' · '+quote.ringBandWidth.toFixed(1)+'mm · '+(quote.ringBandDetail?quote.ringBandDetail.label:'');
   return '';
 }
 function stepDone(i, sel){
@@ -1462,6 +1776,7 @@ function stepDone(i, sel){
   if (i===1) return !!sel.setting;
   if (i===2) return !!sel.metal;
   if (i===3) return true;
+  if (i===4) return !!sel.ringBandProfile;
   return false;
 }
 
@@ -1496,7 +1811,7 @@ function SpecCard(props){
   var sel = props.sel, quote = props.quote;
   var d = quote.diamond;
   return h('div',{ className:'spec-card' },
-    h('div',{ className:'spec-hero' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:d?d.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, uid:'spec' })),
+    h('div',{ className:'spec-hero' }, h(RingScene,{ shape:sel.shape, setting:sel.setting, metalId:sel.metal, carat:d?d.carat:1, bandOn:sel.bandOn, bandStyle:sel.bandStyle, ringBandProfile:sel.ringBandProfile, ringBandDetail:sel.ringBandDetail, ringBandWidth:sel.ringBandWidth, uid:'spec' })),
     h('div',{ className:'spec-heading' },
       h('span',{ className:'eyebrow' }, 'The Specification'),
       h('h2',{ className:'serif' }, shapeLabel(sel.shape)+' '+(quote.setting?quote.setting.label:'')),
@@ -1508,9 +1823,16 @@ function SpecCard(props){
       h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Setting'), h('span',{ className:'v' }, quote.setting ? quote.setting.label : '—')),
       h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Metal'), h('span',{ className:'v' }, quote.metal ? quote.metal.label : '—')),
       h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Wedding band'), h('span',{ className:'v' }, (sel.bandOn && quote.band) ? quote.band.label : 'Not included')),
+      h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band profile'), h('span',{ className:'v' }, quote.ringBandProfile ? quote.ringBandProfile.label : '—')),
+      h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band width'), h('span',{ className:'v tnum' }, quote.ringBandWidth.toFixed(1)+'mm')),
+      h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band detail'), h('span',{ className:'v' }, quote.ringBandDetail ? quote.ringBandDetail.label : '—')),
+      sel.engraving && sel.engraving.trim() && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Engraving'), h('span',{ className:'v' }, '“'+sel.engraving.trim()+'”')),
       h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Diamond price'), h('span',{ className:'v tnum' }, fmtMoney(quote.diamondPrice))),
       h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Setting price'), h('span',{ className:'v tnum' }, fmtMoney(quote.settingPrice))),
-      sel.bandOn && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band price'), h('span',{ className:'v tnum' }, fmtMoney(quote.bandPrice)))
+      sel.bandOn && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band price'), h('span',{ className:'v tnum' }, fmtMoney(quote.bandPrice))),
+      quote.bandWidthPrice>0 && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band width price'), h('span',{ className:'v tnum' }, fmtMoney(quote.bandWidthPrice))),
+      quote.bandDetailPrice>0 && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Band detail price'), h('span',{ className:'v tnum' }, fmtMoney(quote.bandDetailPrice))),
+      quote.engravingPrice>0 && h('div',{ className:'spec-row' }, h('span',{ className:'k' }, 'Engraving fee'), h('span',{ className:'v tnum' }, fmtMoney(quote.engravingPrice)))
     ),
     h('div',{ className:'spec-total-row' },
       h('span',{ className:'k serif' }, 'Estimated total'),
@@ -1591,7 +1913,10 @@ function QuoteForm(props){
    ============================================================ */
 function defaultSel(){
   var firstRound = DIAMONDS.filter(function(d){ return d.shape==='round'; })[0];
-  return { shape:'round', diamondId:firstRound.id, setting:'solitaire', metal:'platinum', bandOn:false, bandStyle:null };
+  return {
+    shape:'round', diamondId:firstRound.id, setting:'solitaire', metal:'platinum', bandOn:false, bandStyle:null,
+    ringBandProfile:'comfort', ringBandWidth:BAND_WIDTH_CFG.default, ringBandDetail:'plain', engraving:''
+  };
 }
 
 function App(){
@@ -1606,7 +1931,7 @@ function App(){
   var quote = useMemo(function(){ return computeQuote(sel); }, [sel]);
 
   function goTo(i){ setStep(i); }
-  function next(){ setStep(Math.min(4, step+1)); }
+  function next(){ setStep(Math.min(STEP_META.length, step+1)); }
   function back(){ setStep(Math.max(0, step-1)); }
   function restart(){ setSel(defaultSel()); setStep(0); }
 
@@ -1614,7 +1939,8 @@ function App(){
     h(StoneStep,{ key:'s0', sel:sel, setSel:setSel, filters:filters, setFilters:setFilters }),
     h(SettingStep,{ key:'s1', sel:sel, setSel:setSel, quote:quote }),
     h(MetalStep,{ key:'s2', sel:sel, setSel:setSel, quote:quote }),
-    h(BandStep,{ key:'s3', sel:sel, setSel:setSel, quote:quote })
+    h(BandStep,{ key:'s3', sel:sel, setSel:setSel, quote:quote }),
+    h(BandDesignStep,{ key:'s4', sel:sel, setSel:setSel, quote:quote })
   ];
 
   var header = h('header',{ className:'masthead' },
@@ -1622,14 +1948,14 @@ function App(){
     h('div',{ className:'tagline' }, 'Design your engagement ring, stone by stone.')
   );
 
-  if (step===4){
+  if (step===STEP_META.length){
     return h('div',{ className:'shell' },
       header,
       h('div',{ className:'summary-wrap' },
         h(SpecCard,{ sel:sel, quote:quote }),
         h(QuoteForm,{ onRestart:restart }),
         h('div',{ className:'step-actions', style:{ justifyContent:'center' } },
-          h('button',{ type:'button', className:'btn btn-ghost', onClick:function(){ setStep(3); } }, 'Back to editing')
+          h('button',{ type:'button', className:'btn btn-ghost', onClick:function(){ setStep(STEP_META.length-1); } }, 'Back to editing')
         ),
         h('p',{ className:'footer-note' }, 'A design prototype — mock diamond inventory, no payment collected.')
       )
@@ -1645,7 +1971,7 @@ function App(){
       h('div',{ className:'wizard-col' },
         h('div',{ className:'steps' },
           STEP_META.map(function(m,i){
-            return h(Step,{ key:m.id, index:i, active:step===i, onOpen:goTo, onNext:next, onBack:back, sel:sel, quote:quote, isLast:i===3 }, stepProps[i]);
+            return h(Step,{ key:m.id, index:i, active:step===i, onOpen:goTo, onNext:next, onBack:back, sel:sel, quote:quote, isLast:i===STEP_META.length-1 }, stepProps[i]);
           })
         )
       )
